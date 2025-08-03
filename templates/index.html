@@ -1,59 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Vibe Check</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background-color: #111;
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 50px;
-    }
-    form {
-      margin-bottom: 20px;
-    }
-    input[type="text"] {
-      padding: 10px;
-      width: 300px;
-      border: none;
-      border-radius: 4px;
-      margin-right: 10px;
-    }
-    button {
-      padding: 10px 20px;
-      background-color: #e63946;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .results {
-      max-width: 600px;
-      margin-top: 20px;
-      text-align: left;
-    }
-    .track {
-      margin-bottom: 10px;
-      border-bottom: 1px solid #444;
-      padding-bottom: 10px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Vibe Check</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: sans-serif;
+            padding: 2rem;
+        }
+        h1 {
+            color: #e63946;
+        }
+        form {
+            margin-bottom: 2rem;
+        }
+        input[type="text"] {
+            padding: 0.5rem;
+            width: 300px;
+        }
+        input[type="submit"] {
+            padding: 0.5rem 1rem;
+            background: #e63946;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 1px solid #444;
+            background: #222;
+        }
+        a {
+            color: #84dcc6;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
+    <h1>🎧 Vibe Check</h1>
 
-  <h1>🎧 Vibe Check</h1>
-  <form method="post">
-    <input type="text" name="prompt" placeholder="e.g. 90s songs by Mariah Carey" required>
-    <button type="submit">Generate Playlist</button>
-  </form>
+    <form method="post">
+        <input type="text" name="prompt" placeholder="Enter your music prompt..." required>
+        <input type="submit" value="Submit">
+    </form>
 
-  <div class="results">
-    <!-- server-generated playlist goes here -->
-  </div>
+    {% if error %}
+        <div class="result">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
 
+    {% if results %}
+        <div>
+            <h2>Results for: "{{ prompt }}"</h2>
+            {% for result in results %}
+                <div class="result">
+                    <strong>{{ result.title }}</strong><br>
+                    {% if result.link %}
+                        <a href="{{ result.link }}" target="_blank">Listen on Spotify</a>
+                    {% else %}
+                        No Spotify link found.
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 </body>
 </html>
