@@ -1,4 +1,4 @@
-import OpenAI
+import openai
 import os
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
