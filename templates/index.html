@@ -1,72 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Vibe Check</title>
-    <style>
-        body {
-            background: #111;
-            color: #eee;
-            font-family: sans-serif;
-            padding: 2rem;
-        }
-        h1 {
-            color: #e63946;
-        }
-        form {
-            margin-bottom: 2rem;
-        }
-        input[type="text"] {
-            padding: 0.5rem;
-            width: 300px;
-        }
-        input[type="submit"] {
-            padding: 0.5rem 1rem;
-            background: #e63946;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-        .result {
-            margin-top: 1rem;
-            padding: 1rem;
-            border: 1px solid #444;
-            background: #222;
-        }
-        a {
-            color: #84dcc6;
-            text-decoration: none;
-        }
-    </style>
+  <title>Vibe Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #111;
+      color: #fff;
+    }
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    ul {
+      margin-top: 1rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>🎧 Vibe Check</h1>
+  <h1>Vibe Check 🎵</h1>
+  <form method="post">
+    <input type="text" name="prompt" placeholder="Enter a vibe..." required>
+    <button type="submit">Generate Playlist</button>
+  </form>
 
-    <form method="post">
-        <input type="text" name="prompt" placeholder="Enter your music prompt..." required>
-        <input type="submit" value="Submit">
-    </form>
-
-    {% if error %}
-        <div class="result">
-            <strong>Error:</strong> {{ error }}
-        </div>
-    {% endif %}
-
-    {% if results %}
-        <div>
-            <h2>Results for: "{{ prompt }}"</h2>
-            {% for result in results %}
-                <div class="result">
-                    <strong>{{ result.title }}</strong><br>
-                    {% if result.link %}
-                        <a href="{{ result.link }}" target="_blank">Listen on Spotify</a>
-                    {% else %}
-                        No Spotify link found.
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+  {% if tracks %}
+    <h2>Playlist for: "{{ query }}"</h2>
+    <ul>
+      {% for track in tracks %}
+        <li>
+          {{ track['title'] }} by {{ track['artist'] }}
+          {% if track['url'] %}
+            - <a href="{{ track['url'] }}" target="_blank">Listen</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 </body>
 </html>
