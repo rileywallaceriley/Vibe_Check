@@ -1,36 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Vibe Check 🎧</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="chat-container">
-    <h1>Vibe Check 🎧</h1>
-    <div id="chat-box" class="chat-box"></div>
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Type a prompt...">
-        <button onclick="sendPrompt()">Send</button>
+    <div class="chat-container">
+        <h1>Vibe Check 🎧</h1>
+        <div id="chat-box" class="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type something like 'songs produced by Kanye West'">
+            <button onclick="sendPrompt()">Send</button>
+        </div>
     </div>
-</div>
-<script>
-    async function sendPrompt() {
-        const input = document.getElementById("user-input");
-        const prompt = input.value;
-        if (!prompt) return;
-        const chatBox = document.getElementById("chat-box");
-        chatBox.innerHTML += `<div class='user-msg'><strong>You:</strong> ${prompt}</div>`;
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt })
-        });
-        const data = await response.json();
-        const rawTracks = data.raw_playlist.map(t => `<li>${t}</li>`).join('');
-        chatBox.innerHTML += `<div class='bot-msg'><strong>Vibe Check:</strong> Found some tracks:<ul>${rawTracks}</ul><em>${data.message}</em></div>`;
-        input.value = "";
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-</script>
+
+    <script>
+        let currentTracks = [];
+
+        async function sendPrompt() {
+            const input = document.getElementById("user-input");
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `<div class='user-msg'><strong>You:</strong> ${prompt}</div>`;
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt })
+            });
+
+            const data = await response.json();
+            currentTracks = data.raw_playlist;
+
+            const rawTracks = currentTracks.map(t => `<li>${t}</li>`).join('');
+            chatBox.innerHTML += `
+                <div class='bot-msg'>
+                    <strong>Vibe Check:</strong>
+                    Found some tracks:
+                    <ul>${rawTracks}</ul>
+                    <em>${data.message}</em>
+                    <button onclick="getLinks()">Get Spotify Links</button>
+                </div>
+            `;
+
+            input.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        async function getLinks() {
+            const response = await fetch('/links', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+            const links = data.linked_playlist.map(item =>
+                `<li><a href="${item.spotify_url}" target="_blank">${item.name} – ${item.artist}</a></li>`
+            ).join('');
+
+            const chatBox = document.getElementById("chat-box");
+            chatBox.innerHTML += `
+                <div class='bot-msg'>
+                    <strong>Spotify Links:</strong>
+                    <ul>${links}</ul>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
 </body>
 </html>
