@@ -1,48 +1,51 @@
 import requests
-import os
 
-DISCOGS_TOKEN = os.environ.get("DISCOGS_USER_TOKEN")
+DISCOGS_API_BASE = "https://api.discogs.com"
+DISCOGS_USER_AGENT = "VibeCheck/1.0"
+DISCOGS_TOKEN = "YOUR_DISCOGS_TOKEN_HERE"
 
-def get_discogs_tracks(intent):
-    name = intent.get("name")
-    role = intent.get("role")
-    decade = intent.get("decade")
+HEADERS = {
+    "User-Agent": DISCOGS_USER_AGENT,
+    "Authorization": f"Discogs token={DISCOGS_TOKEN}"
+}
 
+def search_90s_songs_by_artist(artist_name):
+    search_url = f"{DISCOGS_API_BASE}/database/search"
     params = {
-        "token": DISCOGS_TOKEN,
-        "per_page": 30,
-        "type": "release"
+        "artist": artist_name,
+        "type": "release",
+        "format": "Vinyl, Single, EP, Album",
+        "year": "1990-1999",
+        "per_page": 50,
+        "token": DISCOGS_TOKEN
     }
 
-    if role == "primary_artist":
-        params["artist"] = name
-    else:
-        params["credit"] = name
+    response = requests.get(search_url, headers=HEADERS, params=params)
+    results = response.json().get("results", [])
 
-    if decade:
-        if decade == "1990s":
-            params["year"] = "1990"
-        elif decade == "2000s":
-            params["year"] = "2000"
-        # You could expand this logic to handle ranges
-
-    url = "https://api.discogs.com/database/search"
-    res = requests.get(url, params=params)
-    results = res.json().get("results", [])
-
-    seen = set()
-    playlist = []
+    unique_tracks = set()
+    cleaned_results = []
 
     for r in results:
-        title = r.get("title")
-        year = r.get("year")
-        if not title or title in seen:
+        title = r.get("title", "")
+        if artist_name.lower() not in title.lower():
             continue
-        if "Compilation" in title or "Various" in title:
+
+        # Avoid duplicates and foreign releases
+        if any(x in title for x in ["=", "＝", "瑪麗亞", "マライア", "Mariah Carey ="]):
             continue
-        seen.add(title)
-        playlist.append(f"{title} ({year})")
-        if len(playlist) >= 10:
+
+        if title not in unique_tracks:
+            unique_tracks.add(title)
+            cleaned_results.append({
+                "title": title,
+                "year": r.get("year"),
+                "label": r.get("label", []),
+                "format": r.get("format", []),
+                "resource_url": r.get("resource_url")
+            })
+
+        if len(cleaned_results) >= 10:
             break
 
-    return playlist
+    return cleaned_results
