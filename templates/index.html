@@ -1,76 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Vibe Check 🎧</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>Vibe Check</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 300px;
+      border: none;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #e63946;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .results {
+      max-width: 600px;
+      margin-top: 20px;
+      text-align: left;
+    }
+    .track {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="chat-container">
-        <h1>Vibe Check 🎧</h1>
-        <div id="chat-box" class="chat-box"></div>
-        <div class="input-area">
-            <input type="text" id="user-input" placeholder="Type something like 'songs produced by Kanye West'">
-            <button onclick="sendPrompt()">Send</button>
-        </div>
-    </div>
 
-    <script>
-        let currentTracks = [];
+  <h1>🎧 Vibe Check</h1>
+  <form method="post">
+    <input type="text" name="prompt" placeholder="e.g. 90s songs by Mariah Carey" required>
+    <button type="submit">Generate Playlist</button>
+  </form>
 
-        async function sendPrompt() {
-            const input = document.getElementById("user-input");
-            const prompt = input.value.trim();
-            if (!prompt) return;
+  <div class="results">
+    <!-- server-generated playlist goes here -->
+  </div>
 
-            const chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML += `<div class='user-msg'><strong>You:</strong> ${prompt}</div>`;
-
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt })
-            });
-
-            const data = await response.json();
-            currentTracks = data.raw_playlist;
-
-            const rawTracks = currentTracks.map(t => `<li>${t}</li>`).join('');
-            chatBox.innerHTML += `
-                <div class='bot-msg'>
-                    <strong>Vibe Check:</strong>
-                    Found some tracks:
-                    <ul>${rawTracks}</ul>
-                    <em>${data.message}</em>
-                    <button onclick="getLinks()">Get Spotify Links</button>
-                </div>
-            `;
-
-            input.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        async function getLinks() {
-            const response = await fetch('/links', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({})
-            });
-
-            const data = await response.json();
-            const links = data.linked_playlist.map(item =>
-                `<li><a href="${item.spotify_url}" target="_blank">${item.name} – ${item.artist}</a></li>`
-            ).join('');
-
-            const chatBox = document.getElementById("chat-box");
-            chatBox.innerHTML += `
-                <div class='bot-msg'>
-                    <strong>Spotify Links:</strong>
-                    <ul>${links}</ul>
-                </div>
-            `;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
 </body>
 </html>
