@@ -1,51 +1,54 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-DISCOGS_API_BASE = "https://api.discogs.com"
-DISCOGS_USER_AGENT = "VibeCheck/1.0"
-DISCOGS_TOKEN = "YOUR_DISCOGS_TOKEN_HERE"
+load_dotenv()
+
+DISCOGS_USER_TOKEN = os.getenv("DISCOGS_TOKEN")
+
+BASE_URL = "https://api.discogs.com/database/search"
 
 HEADERS = {
-    "User-Agent": DISCOGS_USER_AGENT,
-    "Authorization": f"Discogs token={DISCOGS_TOKEN}"
+    "User-Agent": "VibeCheck/1.0"
 }
 
-def search_90s_songs_by_artist(artist_name):
-    search_url = f"{DISCOGS_API_BASE}/database/search"
-    params = {
-        "artist": artist_name,
-        "type": "release",
-        "format": "Vinyl, Single, EP, Album",
-        "year": "1990-1999",
-        "per_page": 50,
-        "token": DISCOGS_TOKEN
+def clean_title(title):
+    # Remove non-English characters and known junk
+    return title.encode('ascii', errors='ignore').decode().strip()
+
+def fetch_tracks_by_intent(artist, intent_type, decade=None):
+    role_map = {
+        "songs_by": "artist",
+        "songs_featuring": "artist",
+        "songs_produced_by": "producer",
+        "songs_written_by": "written-by"
     }
 
-    response = requests.get(search_url, headers=HEADERS, params=params)
-    results = response.json().get("results", [])
+    role = role_map.get(intent_type, "artist")
+    year_range = ""
 
-    unique_tracks = set()
-    cleaned_results = []
+    if decade:
+        start = int(decade)
+        year_range = f"&year={start}-{start + 9}"
 
-    for r in results:
-        title = r.get("title", "")
-        if artist_name.lower() not in title.lower():
+    query_url = f"{BASE_URL}?{role}={artist}&type=release&per_page=30{year_range}&token={DISCOGS_USER_TOKEN}"
+    response = requests.get(query_url, headers=HEADERS)
+    data = response.json()
+
+    results = []
+    seen = set()
+
+    for result in data.get("results", []):
+        title = clean_title(result.get("title", ""))
+        if title in seen or not title or "remix" in title.lower() or "karaoke" in title.lower():
             continue
 
-        # Avoid duplicates and foreign releases
-        if any(x in title for x in ["=", "＝", "瑪麗亞", "マライア", "Mariah Carey ="]):
-            continue
+        seen.add(title)
+        results.append({
+            "title": title,
+            "year": result.get("year", ""),
+            "id": result.get("id", ""),
+            "resource_url": result.get("resource_url", "")
+        })
 
-        if title not in unique_tracks:
-            unique_tracks.add(title)
-            cleaned_results.append({
-                "title": title,
-                "year": r.get("year"),
-                "label": r.get("label", []),
-                "format": r.get("format", []),
-                "resource_url": r.get("resource_url")
-            })
-
-        if len(cleaned_results) >= 10:
-            break
-
-    return cleaned_results
+    return results[:10]  # Limit to 10 clean tracks
