@@ -37,3 +37,4 @@ def search_spotify_tracks(query, limit=10):
         }
         for track in results
     ]
+get_spotify_links = search_spotify_tracks
